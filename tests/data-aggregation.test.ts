@@ -1,53 +1,22 @@
 import { describe, it, expect } from 'vitest'
+import {
+    getTopEntities,
+    getSentimentStats,
+    getSourceBreakdown,
+    getImageStats,
+    filterByKeyword,
+    getDailyTrend,
+    type Article
+} from '../lib/aggregation'
 
-interface Article {
-    id: string
-    source: string
-    sentiment: 'positive' | 'neutral' | 'negative'
-    entities: string[]
-    publishedAt: Date
-    imageUrl: string | null
-}
+const mockArticles: Article[] = [
+    { id: '1', source: 'A', sentiment: 'positive', entities: ['Зеленський', 'НАТО'], publishedAt: new Date(), imageUrl: 'url1' },
+    { id: '2', source: 'B', sentiment: 'negative', entities: ['Зеленський', 'Київ'], publishedAt: new Date(), imageUrl: null },
+    { id: '3', source: 'A', sentiment: 'neutral', entities: ['НАТО', 'США'], publishedAt: new Date(), imageUrl: 'url3' },
+    { id: '4', source: 'A', sentiment: 'positive', entities: [], publishedAt: new Date(), imageUrl: null },
+]
 
-function getTopEntities(articles: Article[], limit = 8) {
-    const counts: Record<string, number> = {}
-    articles.forEach(a =>
-        a.entities.forEach(e => counts[e] = (counts[e] || 0) + 1)
-    )
-    return Object.entries(counts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, limit)
-}
-
-function getSentimentStats(articles: Article[]) {
-    if (articles.length === 0) return { positive: 0, neutral: 0, negative: 0 }
-    const pos = articles.filter(a => a.sentiment === 'positive').length
-    const neu = articles.filter(a => a.sentiment === 'neutral').length
-    const neg = articles.filter(a => a.sentiment === 'negative').length
-    const total = articles.length
-    return {
-        positive: Math.round(pos / total * 100),
-        neutral: Math.round(neu / total * 100),
-        negative: Math.round(neg / total * 100),
-    }
-}
-
-function getSourceBreakdown(articles: Article[]) {
-    const counts: Record<string, number> = {}
-    articles.forEach(a => counts[a.source] = (counts[a.source] || 0) + 1)
-    return Object.entries(counts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-}
-
-describe('Data Aggregation - Top Entities', () => {
-    const mockArticles: Article[] = [
-        { id: '1', source: 'A', sentiment: 'positive', entities: ['Зеленський', 'НАТО'], publishedAt: new Date(), imageUrl: null },
-        { id: '2', source: 'B', sentiment: 'negative', entities: ['Зеленський', 'Київ'], publishedAt: new Date(), imageUrl: null },
-        { id: '3', source: 'A', sentiment: 'neutral', entities: ['НАТО', 'США'], publishedAt: new Date(), imageUrl: null },
-    ]
-
+describe('Aggregation - Top Entities', () => {
     it('should count entity occurrences correctly', () => {
         const result = getTopEntities(mockArticles)
         expect(result[0].name).toBe('Зеленський')
@@ -69,9 +38,16 @@ describe('Data Aggregation - Top Entities', () => {
     it('should return empty array for empty input', () => {
         expect(getTopEntities([])).toEqual([])
     })
+
+    it('should handle articles with no entities', () => {
+        const articles: Article[] = [
+            { id: '1', source: 'A', sentiment: 'neutral', entities: [], publishedAt: new Date(), imageUrl: null }
+        ]
+        expect(getTopEntities(articles)).toEqual([])
+    })
 })
 
-describe('Data Aggregation - Sentiment Stats', () => {
+describe('Aggregation - Sentiment Stats', () => {
     it('should return zero stats for empty articles', () => {
         const result = getSentimentStats([])
         expect(result).toEqual({ positive: 0, neutral: 0, negative: 0 })
@@ -99,23 +75,94 @@ describe('Data Aggregation - Sentiment Stats', () => {
         expect(result.positive).toBe(100)
         expect(result.negative).toBe(0)
     })
+
+    it('should sum to approximately 100', () => {
+        const result = getSentimentStats(mockArticles)
+        const sum = result.positive + result.neutral + result.negative
+        expect(sum).toBeGreaterThanOrEqual(99)
+        expect(sum).toBeLessThanOrEqual(101)
+    })
 })
 
-describe('Data Aggregation - Source Breakdown', () => {
+describe('Aggregation - Source Breakdown', () => {
     it('should count articles per source', () => {
-        const articles: Article[] = [
-            { id: '1', source: 'Джерело А', sentiment: 'neutral', entities: [], publishedAt: new Date(), imageUrl: null },
-            { id: '2', source: 'Джерело А', sentiment: 'neutral', entities: [], publishedAt: new Date(), imageUrl: null },
-            { id: '3', source: 'Джерело Б', sentiment: 'neutral', entities: [], publishedAt: new Date(), imageUrl: null },
-        ]
-        const result = getSourceBreakdown(articles)
-        expect(result[0].name).toBe('Джерело А')
-        expect(result[0].count).toBe(2)
-        expect(result[1].name).toBe('Джерело Б')
+        const result = getSourceBreakdown(mockArticles)
+        expect(result[0].name).toBe('A')
+        expect(result[0].count).toBe(3)
+        expect(result[1].name).toBe('B')
         expect(result[1].count).toBe(1)
     })
 
     it('should return empty array for no articles', () => {
         expect(getSourceBreakdown([])).toEqual([])
+    })
+
+    it('should sort by count descending', () => {
+        const result = getSourceBreakdown(mockArticles)
+        for (let i = 1; i < result.length; i++) {
+            expect(result[i - 1].count).toBeGreaterThanOrEqual(result[i].count)
+        }
+    })
+})
+
+describe('Aggregation - Image Stats', () => {
+    it('should count articles with and without images', () => {
+        const result = getImageStats(mockArticles)
+        expect(result.withImage).toBe(2)
+        expect(result.withoutImage).toBe(2)
+        expect(result.percentage).toBe(50)
+    })
+
+    it('should return 0 percentage for empty articles', () => {
+        const result = getImageStats([])
+        expect(result.percentage).toBe(0)
+        expect(result.withImage).toBe(0)
+    })
+
+    it('should return 100 when all have images', () => {
+        const articles: Article[] = [
+            { id: '1', source: 'A', sentiment: 'neutral', entities: [], publishedAt: new Date(), imageUrl: 'url' }
+        ]
+        expect(getImageStats(articles).percentage).toBe(100)
+    })
+})
+
+describe('Aggregation - Filter by Keyword', () => {
+    it('should filter by entity name', () => {
+        const result = filterByKeyword(mockArticles, 'Зеленський')
+        expect(result.length).toBe(2)
+    })
+
+    it('should filter by source', () => {
+        const result = filterByKeyword(mockArticles, 'A')
+        expect(result.length).toBeGreaterThanOrEqual(3)
+    })
+
+    it('should be case insensitive', () => {
+        const upper = filterByKeyword(mockArticles, 'НАТО')
+        const lower = filterByKeyword(mockArticles, 'нато')
+        expect(lower.length).toBe(upper.length)
+    })
+
+    it('should return all articles for empty keyword', () => {
+        const result = filterByKeyword(mockArticles, '')
+        expect(result.length).toBe(mockArticles.length)
+    })
+})
+
+describe('Aggregation - Daily Trend', () => {
+    it('should return array of correct length', () => {
+        const result = getDailyTrend(mockArticles, 7)
+        expect(result).toHaveLength(7)
+    })
+
+    it('should default to 7 days', () => {
+        const result = getDailyTrend(mockArticles)
+        expect(result).toHaveLength(7)
+    })
+
+    it('should return zeros for empty articles', () => {
+        const result = getDailyTrend([], 5)
+        expect(result).toEqual([0, 0, 0, 0, 0])
     })
 })

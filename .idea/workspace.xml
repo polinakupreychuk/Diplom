@@ -5,10 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="792397cd-19e8-4cc0-b879-04ad30d03afd" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/lib/aggregation.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/utils.test.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sonar-project.properties" beforeDir="false" afterPath="$PROJECT_DIR$/sonar-project.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/data-aggregation.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/data-aggregation.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/nlp-utils.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/nlp-utils.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/time-buckets.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/tests/time-buckets.test.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vitest.config.mts" beforeDir="false" afterPath="$PROJECT_DIR$/vitest.config.mts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -81,7 +83,7 @@
       <workItem from="1776690813896" duration="5948000" />
       <workItem from="1776713708695" duration="1144000" />
       <workItem from="1776800491656" duration="3706000" />
-      <workItem from="1776848811102" duration="8543000" />
+      <workItem from="1776848811102" duration="10837000" />
     </task>
     <servers />
   </component>

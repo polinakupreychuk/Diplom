@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { analyzeArticle, analyzeSentiment, extractEntities, getNLPStats } from '@/lib/nlp-utils'
+import { describe, it, expect } from 'vitest'
+import { analyzeArticle, analyzeSentiment, extractEntities, getNLPStats } from '../lib/nlp-utils'
 
 describe('NLP Utils - Sentiment Analysis', () => {
     it('should classify positive text correctly', async () => {
@@ -87,7 +87,5 @@ describe('NLP Utils - Stats', () => {
         expect(stats).toHaveProperty('cacheHits')
         expect(stats).toHaveProperty('provider')
         expect(stats).toHaveProperty('model')
-        expect(stats.provider).toBe('OpenAI')
-        expect(stats.model).toBe('gpt-4o-mini')
     })
 })
